@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External Sorting Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">External Sorting Visualization</h1>
+            <p class="text-gray-600">Visualize large data sorting algorithm with limited memory</p>
+        </header>
+
+        <!-- Upload Section -->
+        <section id="upload-section" class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">📁 Upload File Input</h2>
+
+            <div
+                class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                <input type="file" id="fileInput" accept=".txt" class="hidden">
+                <label for="fileInput" class="cursor-pointer">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="mt-4">
+                        <span
+                            class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-block">
+                            Choose .txt file
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">Or drag and drop file here</p>
+                </label>
+            </div>
+
+            <!-- File Info -->
+            <div id="fileInfo" class="mt-4 hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800">
+                        <span class="font-semibold">File:</span> <span id="fileName"></span>
+                        <span class="ml-4 font-semibold">File Size:</span> <span id="fileSize"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Data Preview -->
+            <div id="dataPreview" class="mt-4 hidden">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Loaded Data:</h3>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 max-h-60 overflow-y-auto">
+                    <p class="text-sm text-gray-600 mb-2">
+                        <span class="font-semibold">Total Elements:</span> <span id="totalElements">0</span>
+                    </p>
+                    <div id="dataContent" class="font-mono text-sm text-gray-700 whitespace-pre-wrap"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Configuration Section -->
+        <section id="config-section" class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">⚙️ Algorithm Configuration</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Buffer Frame Number -->
+                <div class="space-y-2">
+                    <label for="bufferCount" class="block text-sm font-medium text-gray-700">
+                        Buffer Frame Number
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="bufferCount" value="3" min="2" max="10"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <span class="text-sm text-gray-500 w-20">frames</span>
+                    </div>
+                    <p class="text-xs text-gray-500">Number of buffers used during merge</p>
+                </div>
+
+                <!-- Page Number -->
+                <div class="space-y-2">
+                    <label for="pageCount" class="block text-sm font-medium text-gray-700">
+                        Page Number
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="pageCount" value="5" min="1" max="20"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <span class="text-sm text-gray-500 w-20">pages</span>
+                    </div>
+                    <p class="text-xs text-gray-500">Total number of data pages</p>
+                </div>
+
+                <!-- Max records per Page -->
+                <div class="space-y-2">
+                    <label for="pageSize" class="block text-sm font-medium text-gray-700">
+                        Max records per Page
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="pageSize" value="3" min="1"
+                            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <span class="text-sm text-gray-500 w-20">records</span>
+                    </div>
+                    <p class="text-xs text-gray-500">Memory limit for each chunk</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-6 flex gap-4">
+                <button id="startSort"
+                    class="flex-1 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    disabled>
+                    ▶️ Start Sorting
+                </button>
+                <button id="resetBtn"
+                    class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-semibold">
+                    🔄 Reset
+                </button>
+            </div>
+        </section>
+
+        <!-- Visualization Section -->
+        <section id="visualization-section" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">🎬 Visualization</h2>
+
+            <!-- Progress Indicator -->
+            <div class="mb-4">
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">Progress</span>
+                    <span class="text-sm font-medium text-gray-700" id="progressText">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Visualization Canvas -->
+            <div id="vizCanvas" class="border border-gray-200 rounded-lg p-4 min-h-[300px] bg-gray-50">
+                <!-- Visualization content will be rendered here -->
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="mt-4 flex gap-2">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    id="prevStep">
+                    ⏮️ Previous
+                </button>
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    id="playPause">
+                    ▶️ Play
+                </button>
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                    id="nextStep">
+                    ⏭️ Next
+                </button>
+                <div class="ml-auto flex items-center gap-2">
+                    <label for="speed" class="text-sm text-gray-600">Speed:</label>
+                    <input type="range" id="speed" min="100" max="2000" value="1000" class="w-32">
+                    <span id="speedValue" class="text-sm text-gray-600 w-12">1.0x</span>
+                </div>
+            </div>
+        </section>
+
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/external-sort.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
