@@ -1,11 +1,3 @@
-/**
- * Visualization Module - External Sorting with Buffers
- * 
- * 2-Column Layout:
- * - Left: Secondary Storage (Pages)
- * - Right: Main Memory (Buffers)
- */
-
 class SortingVisualizer {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
@@ -16,9 +8,6 @@ class SortingVisualizer {
         this.timer = null;
     }
 
-    /**
-     * Initialize visualization
-     */
     init(bufferCount, pageSize) {
         this.steps = [];
         this.currentStep = 0;
@@ -32,20 +21,13 @@ class SortingVisualizer {
         this.pageSize = pageSize;
     }
 
-    /**
-     * Record a step showing buffers and pages state
-     */
     recordStep(stepData) {
         this.steps.push(stepData);
     }
 
-    /**
-     * Record chunk step with pages/buffers format
-     */
     recordChunksStep(operation, chunks, metrics = {}) {
-        // Handle both old format (arrays) and new format (objects with data and runId)
         const pages = chunks.map((chunk, idx) => {
-            const data = chunk.data || chunk; // Support both formats
+            const data = chunk.data || chunk;
             const runId = chunk.runId || `Run ${idx + 1}`;
             return {
                 id: `P${idx + 1}`,
@@ -77,9 +59,6 @@ class SortingVisualizer {
         });
     }
 
-    /**
-     * Display current step (pages/buffers 2-column layout)
-     */
     displayStep(stepIndex) {
         if (this.steps.length === 0) return;
         const index = Math.max(0, Math.min(stepIndex, this.steps.length - 1));
@@ -91,11 +70,7 @@ class SortingVisualizer {
         this.displayNewFormat(step, index);
     }
 
-    /**
-     * Display new format (pages/buffers 2-column layout with runs grouping)
-     */
     displayNewFormat(step, index) {
-        // Step info header
         const header = document.createElement('div');
         header.className = 'mb-4 pb-3 border-b border-gray-300';
         header.innerHTML = `
@@ -113,28 +88,22 @@ class SortingVisualizer {
         `;
         this.container.appendChild(header);
 
-        // Main grid: Pages (Left) + Buffers (Right)
         const mainGrid = document.createElement('div');
         mainGrid.className = 'grid grid-cols-2 gap-6';
 
-        // Left Column: Secondary Storage with Runs
         const leftCol = document.createElement('div');
         leftCol.innerHTML = '<h3 class="text-sm font-semibold text-gray-700 mb-3">📦 Secondary Storage (Pages & Runs)</h3>';
         const pagesContainer = document.createElement('div');
         pagesContainer.className = 'space-y-3';
 
         if (step.pages && Array.isArray(step.pages)) {
-            // Group pages by run if run information exists
             const pagesByRun = this.groupPagesByRun(step.pages);
-
             if (Object.keys(pagesByRun).length > 0) {
-                // Display grouped by runs
                 Object.entries(pagesByRun).forEach(([runId, pages]) => {
                     const runContainer = this.createRunContainer(runId, pages);
                     pagesContainer.appendChild(runContainer);
                 });
             } else {
-                // Display pages individually if no run info
                 step.pages.forEach(page => {
                     const pageBox = this.createPageBox(page);
                     pagesContainer.appendChild(pageBox);
@@ -143,7 +112,6 @@ class SortingVisualizer {
         }
         leftCol.appendChild(pagesContainer);
 
-        // Right Column: Main Memory
         const rightCol = document.createElement('div');
         rightCol.innerHTML = '<h3 class="text-sm font-semibold text-gray-700 mb-3">💾 Main Memory (Buffers)</h3>';
         const buffersContainer = document.createElement('div');
@@ -162,9 +130,6 @@ class SortingVisualizer {
         this.container.appendChild(mainGrid);
     }
 
-    /**
-     * Group pages by their run ID
-     */
     groupPagesByRun(pages) {
         const runs = {};
         pages.forEach(page => {
@@ -177,13 +142,9 @@ class SortingVisualizer {
         return runs;
     }
 
-    /**
-     * Create a run container with all its pages
-     */
     createRunContainer(runId, pages) {
         const container = document.createElement('div');
 
-        // Determine if this run is being merged
         const isMerging = pages.some(p => p.status === 'LOADING' || p.status === 'MERGING');
         const isComplete = pages.some(p => p.status === 'DONE' || p.status === 'UPDATED');
 
@@ -203,7 +164,6 @@ class SortingVisualizer {
         container.className = `border-2 ${runBorderColor} ${runBgColor} rounded-lg p-4 transition-all`;
         container.style.cssText = shadowStyle;
 
-        // Run header
         const runHeader = document.createElement('div');
         runHeader.className = 'mb-3 pb-2 border-b border-gray-300';
         runHeader.innerHTML = `
@@ -214,7 +174,6 @@ class SortingVisualizer {
         `;
         container.appendChild(runHeader);
 
-        // Pages in this run
         const pagesGrid = document.createElement('div');
         pagesGrid.className = 'space-y-2';
         pages.forEach(page => {
@@ -226,13 +185,10 @@ class SortingVisualizer {
         return container;
     }
 
-    /**
-     * Create page box with smaller styling for use within run container
-     */
     createPageBoxForRun(page) {
         const box = document.createElement('div');
 
-        // Determine styling based on status
+
         let statusColor = 'border-gray-300 bg-gray-50';
         let statusIcon = '⏳';
         let borderStyle = 'border-2';
@@ -276,13 +232,12 @@ class SortingVisualizer {
         const content = document.createElement('div');
         if (page.data && page.data.length > 0) {
             content.className = 'grid gap-1';
-            // Determine grid columns based on data length
             const cols = page.data.length <= 5 ? page.data.length : 5;
             content.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
             page.data.forEach(item => {
                 const numBox = document.createElement('div');
-                // Support both plain numbers and objects with value/highlight properties
+
                 const value = typeof item === 'object' ? item.value : item;
                 let boxStyle = 'bg-blue-500 text-white rounded-sm p-1 text-center font-bold text-xs border-2 border-blue-600';
 
@@ -305,13 +260,8 @@ class SortingVisualizer {
         return box;
     }
 
-    /**
-     * Create page box element with grid of number boxes
-     */
     createPageBox(page) {
         const box = document.createElement('div');
-
-        // Determine styling based on status
         let statusColor = 'border-gray-300 bg-gray-50';
         let statusIcon = '⏳';
         let borderStyle = 'border-2';
@@ -346,13 +296,12 @@ class SortingVisualizer {
         const content = document.createElement('div');
         if (page.data && page.data.length > 0) {
             content.className = 'grid gap-2';
-            // Determine grid columns based on data length
             const cols = page.data.length <= 3 ? page.data.length : 3;
             content.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
             page.data.forEach(item => {
                 const numBox = document.createElement('div');
-                // Support both plain numbers and objects with value/highlight properties
+
                 const value = typeof item === 'object' ? item.value : item;
                 let boxStyle = 'bg-blue-500 text-white rounded-md p-2 text-center font-bold text-sm border-2 border-blue-600';
 
@@ -375,13 +324,8 @@ class SortingVisualizer {
         return box;
     }
 
-    /**
-     * Create buffer box element with grid of number boxes
-     */
     createBufferBox(buffer) {
         const box = document.createElement('div');
-
-        // Determine styling based on status
         let statusColor = 'border-blue-300 bg-blue-50';
         let borderWeight = 'border-2';
         let shadowStyle = '';
@@ -420,20 +364,18 @@ class SortingVisualizer {
         const content = document.createElement('div');
         if (buffer.data && buffer.data.length > 0) {
             content.className = 'grid gap-2';
-            // Determine grid columns
             const cols = buffer.data.length <= 3 ? buffer.data.length : 3;
             content.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
             buffer.data.forEach(item => {
                 const numBox = document.createElement('div');
-                // Support both plain numbers and objects with value/highlight properties
                 const value = typeof item === 'object' ? item.value : item;
                 let boxStyle = 'bg-green-500 text-white rounded-md p-2 text-center font-bold text-sm border-2 border-green-600';
 
                 if (typeof item === 'object' && item.highlight) {
                     boxStyle = 'bg-green-500 text-white rounded-md p-2 text-center font-bold text-sm border-4 border-red-600 shadow-lg';
                 } else if (typeof item === 'object' && item.removed) {
-                    // Hide removed items (they've been moved to output)
+
                     boxStyle = 'bg-gray-300 text-gray-500 rounded-md p-2 text-center font-bold text-sm border-2 border-gray-400 opacity-30 line-through';
                 }
 
@@ -450,22 +392,16 @@ class SortingVisualizer {
         return box;
     }
 
-    /**
-     * Get color for status badge
-     */
     getStatusBgColor(status) {
         const colors = {
-            'ACTIVE': '#0284C7',    // blue-600
-            'EMPTY': '#9CA3AF',      // gray-400
-            'SORTING': '#D97706',    // amber-600
-            'FULL': '#DC2626'        // red-600
+            'ACTIVE': '#0284C7',
+            'EMPTY': '#9CA3AF',
+            'SORTING': '#D97706',
+            'FULL': '#DC2626'
         };
         return colors[status] || '#6B7280';
     }
 
-    /**
-     * Playback controls
-     */
     play() {
         if (this.isPlaying || this.steps.length === 0) return;
         this.isPlaying = true;
@@ -517,9 +453,6 @@ class SortingVisualizer {
         }
     }
 
-    /**
-     * Update visualization when config changes
-     */
     updateConfig(bufferCount, pageSize) {
         this.bufferCount = bufferCount;
         this.pageSize = pageSize;
@@ -528,17 +461,12 @@ class SortingVisualizer {
         }
     }
 
-    /**
-     * Get total steps
-     */
     getTotalSteps() {
         return this.steps.length;
     }
 
-    /**
-     * Get current step number
-     */
     getCurrentStep() {
         return this.currentStep + 1;
     }
 }
+

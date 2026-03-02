@@ -1,14 +1,8 @@
-/**
- * Main Application Logic
- * Handles UI interactions and connects frontend with sorting algorithm
- */
-
-// Global state
 let inputData = [];
 let sorter = null;
 let visualizer = null;
 
-// DOM Elements
+
 const fileInput = document.getElementById('fileInput');
 const fileInfo = document.getElementById('fileInfo');
 const fileName = document.getElementById('fileName');
@@ -26,10 +20,10 @@ const resetBtn = document.getElementById('resetBtn');
 
 const visualizationSection = document.getElementById('visualization-section');
 
-// File Upload Handler
+
 fileInput.addEventListener('change', handleFileUpload);
 
-// Config inputs
+
 bufferCount.addEventListener('input', () => {
     validateAndSyncConfig(false);
     if (visualizer) visualizer.updateConfig(parseInt(bufferCount.value), parseInt(pageSize.value));
@@ -43,7 +37,7 @@ pageSize.addEventListener('input', () => {
     if (visualizer) visualizer.updateConfig(parseInt(bufferCount.value), parseInt(pageSize.value));
 });
 
-// Drag and drop support
+
 const uploadSection = document.getElementById('upload-section');
 uploadSection.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -66,12 +60,12 @@ function handleFileUpload(event) {
 
     if (!file) return;
 
-    // Display file info
+    
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
     fileInfo.classList.remove('hidden');
 
-    // Read file content
+    
     const reader = new FileReader();
     reader.onload = function (e) {
         const content = e.target.result;
@@ -81,7 +75,7 @@ function handleFileUpload(event) {
 }
 
 function parseFileContent(content) {
-    // Parse numbers from file (comma or newline separated)
+    
     const numbers = content
         .split(/[\n,\s]+/)
         .map(s => s.trim())
@@ -96,20 +90,20 @@ function parseFileContent(content) {
 
     inputData = numbers;
 
-    // Display data preview
+    
     totalElements.textContent = numbers.length;
 
-    // Show first 100 numbers
+    
     const preview = numbers.slice(0, 100).join(', ');
     const suffix = numbers.length > 100 ? `\n... và ${numbers.length - 100} số khác` : '';
     dataContent.textContent = preview + suffix;
 
     dataPreview.classList.remove('hidden');
 
-    // Sync config suggestions based on data size
+    
     validateAndSyncConfig(false);
 
-    // Enable start button
+    
     startSort.disabled = false;
 }
 
@@ -119,48 +113,45 @@ function formatFileSize(bytes) {
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-// Start Sorting
+
 startSort.addEventListener('click', async () => {
     if (inputData.length === 0) {
         alert('Vui lòng upload file trước!');
         return;
     }
 
-    // Get configuration (validated)
+    
     const config = validateAndSyncConfig(true);
 
-    // Show visualization section
+    
     visualizationSection.classList.remove('hidden');
 
-    // Disable start button during sorting
+    
     startSort.disabled = true;
     startSort.textContent = '⏳ Đang sắp xếp...';
 
-    // Create sorter instance
+    
     sorter = new ExternalSort(config.pageSize);
     visualizer = new SortingVisualizer('vizCanvas');
     visualizer.init(config.bufferCount, config.pageSize);
 
-    // Update progress
+    
     updateProgress(20, 'Đang chia dữ liệu thành chunks...');
 
-    // Simulate async processing for better UX
+    
     await sleep(500);
 
-    // Perform sorting
-    try {
-        // Build visualization steps
+    
+    try {        
         const rawChunks = buildRawChunks(inputData, config.pageSize);
         visualizer.recordChunksStep('DIVIDE', rawChunks, {});
 
         const result = await sorter.sort([...inputData]);
 
-        // Add detailed steps for SORT phase (page → input buffer → quicksort → output buffer → page)
         addDetailedSortSteps(rawChunks, sorter.chunks, visualizer, config.bufferCount);
 
         add2WayMergeSteps(sorter.chunks, visualizer, config.pageSize);
 
-        // Display chunks division as first step
         visualizer.displayStep(0);
 
         updateProgress(100, 'Hoàn thành!');
@@ -177,31 +168,26 @@ startSort.addEventListener('click', async () => {
     }
 });
 
-// Reset
+
 resetBtn.addEventListener('click', () => {
-    // Reset UI
     fileInput.value = '';
     fileInfo.classList.add('hidden');
     dataPreview.classList.add('hidden');
     visualizationSection.classList.add('hidden');
-
-    // Reset state
+    
     inputData = [];
     sorter = null;
     visualizer = null;
 
-    // Reset configuration to defaults
     bufferCount.value = 3;
     pageCount.value = 5;
     pageSize.value = 20;
 
-    startSort.disabled = true;
-
-    // Reset progress
+    startSort.disabled = true;    
     updateProgress(0, '0%');
 });
 
-// Helper functions
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -209,7 +195,6 @@ function sleep(ms) {
 function updateProgress(percent, text) {
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
-
     progressBar.style.width = percent + '%';
     progressText.textContent = text || percent + '%';
 }
@@ -252,7 +237,7 @@ function verifySorted(arr) {
     return true;
 }
 
-// Speed control for visualization
+
 document.getElementById('speed').addEventListener('input', (e) => {
     const speed = parseInt(e.target.value);
     const speedValue = document.getElementById('speedValue');
@@ -262,7 +247,7 @@ document.getElementById('speed').addEventListener('input', (e) => {
     }
 });
 
-// Visualization controls
+
 document.getElementById('prevStep').addEventListener('click', () => {
     if (visualizer) {
         visualizer.prevStep();
@@ -292,7 +277,7 @@ function buildRawChunks(data, pageSize) {
     for (let i = 0; i < data.length; i += pageSize) {
         chunks.push(data.slice(i, i + pageSize));
     }
-    // Add run tracking - initially each chunk is its own run
+    
     return chunks.map((chunk, idx) => ({
         data: chunk,
         runId: `Run ${idx + 1}`
@@ -300,7 +285,7 @@ function buildRawChunks(data, pageSize) {
 }
 
 function addDetailedSortSteps(rawChunks, sortedChunks, viz, bufferCount) {
-    // Extract data from new chunk format
+    
     const currentPages = rawChunks.map(chunk => [...chunk.data]);
     const runIds = rawChunks.map(chunk => chunk.runId);
 
@@ -309,7 +294,7 @@ function addDetailedSortSteps(rawChunks, sortedChunks, viz, bufferCount) {
         const runId = rawChunkObj.runId;
         const sortedChunk = sortedChunks[pageIdx] ? [...sortedChunks[pageIdx]] : [...rawChunk].sort((a, b) => a - b);
 
-        // Step 1: Load page data into input buffer
+        
         const pagesLoading = currentPages.map((page, idx) => ({
             id: `P${idx + 1}`,
             data: [...page],
@@ -350,7 +335,7 @@ function addDetailedSortSteps(rawChunks, sortedChunks, viz, bufferCount) {
             metrics: { reads: 1, writes: 0, comparisons: 0 }
         });
 
-        // Step 2: Quicksort in input buffer
+        
         const pagesSorting = currentPages.map((page, idx) => ({
             id: `P${idx + 1}`,
             data: [...page],
@@ -391,7 +376,7 @@ function addDetailedSortSteps(rawChunks, sortedChunks, viz, bufferCount) {
             metrics: { reads: 0, writes: 0, comparisons: sortedChunk.length }
         });
 
-        // Step 3: Move sorted data to output buffer
+        
         const pagesMoveOutput = currentPages.map((page, idx) => ({
             id: `P${idx + 1}`,
             data: [...page],
@@ -432,7 +417,7 @@ function addDetailedSortSteps(rawChunks, sortedChunks, viz, bufferCount) {
             metrics: { reads: 0, writes: 0, comparisons: 0 }
         });
 
-        // Step 4: Write back to original page
+        
         currentPages[pageIdx] = [...sortedChunk];
         const pagesWritingBack = currentPages.map((page, idx) => ({
             id: `P${idx + 1}`,
@@ -472,13 +457,13 @@ function addDetailedSortSteps(rawChunks, sortedChunks, viz, bufferCount) {
 function add2WayMergeSteps(initialChunks, viz, pageSize) {
     const bufferCount = viz.bufferCount || 3;
 
-    // Initialize runs with run IDs
+    
     let runs = initialChunks.map((chunk, idx) => ({
         id: `Run ${idx + 1}`,
         pages: [chunk]
     }));
 
-    // Track pages with run IDs
+    
     let pageCounter = 1;
     let currentPages = initialChunks.map((chunk, idx) => ({
         id: `P${pageCounter++}`,
@@ -490,23 +475,23 @@ function add2WayMergeSteps(initialChunks, viz, pageSize) {
     let pass = 0;
     let nextRunId = initialChunks.length + 1;
 
-    // PASS 0 snapshot: initial runs after local sorting
+    
     recordPassSummaryStep(viz, 0, runs, currentPages, 'BEFORE');
 
     while (runs.length > 1) {
         pass++;
-        // PASS k snapshot: before merging
+        
         recordPassSummaryStep(viz, pass, runs, currentPages, 'BEFORE');
 
         const newRuns = [];
         const newPages = [];
 
-        // Process runs in pairs (2-way merge)
+        
         for (let i = 0; i < runs.length; i += 2) {
             if (i + 1 < runs.length) {
                 const mergedRunId = `Run ${nextRunId++}`;
 
-                // Merge 2 runs
+                
                 const { mergedRun, updatedPages } = perform2WayMerge(
                     runs[i].pages,
                     runs[i + 1].pages,
@@ -525,18 +510,18 @@ function add2WayMergeSteps(initialChunks, viz, pageSize) {
                     pages: mergedRun
                 });
 
-                // Only add pages from merged run (not from the old run1 and run2)
+                
                 newPages.push(...updatedPages.filter(p => p.runId === mergedRunId));
 
-                // Replace old runs immediately so next merge in the same pass does not show them
+                
                 const remainingPages = currentPages.filter(
                     (p) => p.runId !== runs[i].id && p.runId !== runs[i + 1].id
                 );
                 currentPages = [...remainingPages, ...updatedPages.map((p) => ({ ...p }))];
             } else {
-                // Odd run, carry forward to next pass
+                
                 newRuns.push(runs[i]);
-                // Keep existing pages for this run
+                
                 runs[i].pages.forEach(page => {
                     const existingPage = currentPages.find(p => p.data === page);
                     if (existingPage) {
@@ -556,11 +541,11 @@ function add2WayMergeSteps(initialChunks, viz, pageSize) {
         runs = newRuns;
         currentPages = newPages;
 
-        // PASS k snapshot: after merging
+        
         recordPassSummaryStep(viz, pass, runs, currentPages, 'AFTER');
     }
 
-    // Final snapshot: one sorted run remains
+    
     recordPassSummaryStep(viz, pass, runs, currentPages, 'FINAL');
 }
 
@@ -602,12 +587,10 @@ function perform2WayMerge(run1, run2, viz, pass, bufferCount, pageSize, currentP
     const mergedRun = [];
     let updatedPages = [];
 
-    // Find pages that belong to run1 and run2
     const run1Pages = currentPages.filter(p => p.runId === run1Id);
     const run2Pages = currentPages.filter(p => p.runId === run2Id);
     const allMergedPages = [...run1Pages, ...run2Pages];
-
-    // Keep source runs visible during merge; build temporary pages for merged run
+    
     const mergedVisualPages = allMergedPages.map((page, idx) => ({
         id: `${mergedRunId}-P${idx + 1}`,
         data: [],
@@ -615,34 +598,23 @@ function perform2WayMerge(run1, run2, viz, pass, bufferCount, pageSize, currentP
         runId: mergedRunId
     }));
 
-    // Display ALL pages (including other runs), not just run1 and run2
     let pagesForDisplay = [...currentPages];
 
-    // Track current page and element position for each run
     let run1PageIdx = 0;
     let run2PageIdx = 0;
     let run1ElemIdx = 0;
     let run2ElemIdx = 0;
-    let mergedPageIdx = 0;
-
-    // B1: Load first page of both runs into input buffers
+    let mergedPageIdx = 0;    
     let inputBuffer1 = run1.length > 0 ? [...run1[0]] : [];
     let inputBuffer2 = run2.length > 0 ? [...run2[0]] : [];
 
-    // Record B1: Load pages into buffers
-    record2WayLoadPages(viz, pass, inputBuffer1, inputBuffer2, bufferCount, pagesForDisplay, run1Id, run2Id, mergedVisualPages);
-
-    // B2: Create new merged run (show it will contain pages from run1 and run2)
+    record2WayLoadPages(viz, pass, inputBuffer1, inputBuffer2, bufferCount, pagesForDisplay, run1Id, run2Id, mergedVisualPages);    
     record2WayCreateMergedRun(viz, pass, run1Pages, run2Pages, pagesForDisplay, run1Id, run2Id, mergedVisualPages, mergedRunId, bufferCount);
 
-    // B3: Merge process - repeatedly select minimum from 2 input buffers
     while (run1ElemIdx < inputBuffer1.length || run2ElemIdx < inputBuffer2.length || run1PageIdx < run1.length - 1 || run2PageIdx < run2.length - 1) {
         let selectedValue = null;
-        let fromBuffer = null;
-
-        // Compare and select minimum from 2 input buffers
+        let fromBuffer = null;        
         if (run1ElemIdx < inputBuffer1.length && run2ElemIdx < inputBuffer2.length) {
-            // Both buffers have data
             if (inputBuffer1[run1ElemIdx] <= inputBuffer2[run2ElemIdx]) {
                 selectedValue = inputBuffer1[run1ElemIdx];
                 run1ElemIdx++;
@@ -653,25 +625,19 @@ function perform2WayMerge(run1, run2, viz, pass, bufferCount, pageSize, currentP
                 fromBuffer = 2;
             }
         } else if (run1ElemIdx < inputBuffer1.length) {
-            // Only buffer 1 has data
             selectedValue = inputBuffer1[run1ElemIdx];
             run1ElemIdx++;
             fromBuffer = 1;
         } else if (run2ElemIdx < inputBuffer2.length) {
-            // Only buffer 2 has data
             selectedValue = inputBuffer2[run2ElemIdx];
             run2ElemIdx++;
             fromBuffer = 2;
         }
 
         if (selectedValue !== null) {
-            // Add to output buffer
             outputBuffer.push(selectedValue);
 
-            // Record B3: Merge step (compare and select)
-            record2WayMergeStep(viz, pass, selectedValue, fromBuffer, outputBuffer, inputBuffer1, inputBuffer2, run1ElemIdx, run2ElemIdx, bufferCount, pageSize, pagesForDisplay, run1Id, run2Id, mergedRunId, mergedVisualPages);
-
-            // B4: If output buffer is full, write to original page
+            record2WayMergeStep(viz, pass, selectedValue, fromBuffer, outputBuffer, inputBuffer1, inputBuffer2, run1ElemIdx, run2ElemIdx, bufferCount, pageSize, pagesForDisplay, run1Id, run2Id, mergedRunId, mergedVisualPages);            
             if (outputBuffer.length === pageSize) {
                 const pageData = [...outputBuffer];
                 mergedRun.push(pageData);
@@ -685,27 +651,22 @@ function perform2WayMerge(run1, run2, viz, pass, bufferCount, pageSize, currentP
                 record2WayWritePage(viz, pass, mergedVisualPages[mergedPageIdx - 1]?.id || 'P?', pageData, inputBuffer1, inputBuffer2, run1ElemIdx, run2ElemIdx, bufferCount, pagesForDisplay, mergedVisualPages, run1Id, run2Id, mergedRunId);
                 outputBuffer.length = 0;
             }
-        }
-
-        // Check if we need to load more pages (Back to B1)
+        }   
         if (run1ElemIdx >= inputBuffer1.length && run1PageIdx < run1.length - 1) {
-            // Load next page from run1
             run1PageIdx++;
             inputBuffer1 = [...run1[run1PageIdx]];
             run1ElemIdx = 0;
             record2WayLoadNextPage(viz, pass, 1, inputBuffer1, inputBuffer2, run1ElemIdx, run2ElemIdx, bufferCount, pagesForDisplay, run1Id, run2Id, outputBuffer, mergedVisualPages, mergedRunId);
         }
 
-        if (run2ElemIdx >= inputBuffer2.length && run2PageIdx < run2.length - 1) {
-            // Load next page from run2
+        if (run2ElemIdx >= inputBuffer2.length && run2PageIdx < run2.length - 1) {            
             run2PageIdx++;
             inputBuffer2 = [...run2[run2PageIdx]];
             run2ElemIdx = 0;
             record2WayLoadNextPage(viz, pass, 2, inputBuffer1, inputBuffer2, run1ElemIdx, run2ElemIdx, bufferCount, pagesForDisplay, run1Id, run2Id, outputBuffer, mergedVisualPages, mergedRunId);
         }
     }
-
-    // B4: Write remaining data in output buffer
+   
     if (outputBuffer.length > 0) {
         const pageData = [...outputBuffer];
         mergedRun.push(pageData);
@@ -717,17 +678,14 @@ function perform2WayMerge(run1, run2, viz, pass, bufferCount, pageSize, currentP
         }
 
         record2WayWritePage(viz, pass, mergedVisualPages[mergedPageIdx - 1]?.id || 'P?', pageData, inputBuffer1, inputBuffer2, run1ElemIdx, run2ElemIdx, bufferCount, pagesForDisplay, mergedVisualPages, run1Id, run2Id, mergedRunId);
-    }
-
-    // After merge is fully visualized, replace old runs with new run pages (old runs removed at pass end)
+    }    
     updatedPages = allMergedPages.map((sourcePage, idx) => ({
         id: sourcePage.id,
         data: mergedRun[idx] ? [...mergedRun[idx]] : [],
         status: 'WAITING',
         runId: mergedRunId
     }));
-
-    // B5: Replace source runs with merged run immediately after merged run is complete
+    
     const pagesAfterReplace = [
         ...pagesForDisplay
             .filter((p) => p.runId !== run1Id && p.runId !== run2Id)
@@ -766,9 +724,7 @@ function record2WayLoadPages(viz, pass, inputBuffer1, inputBuffer2, bufferCount,
             data: page.data ? [...page.data] : [],
             status: 'WAITING',
             runId: page.runId
-        }));
-
-    // Show merged run placeholders while source runs still exist
+        }));    
     mergedVisualPages.forEach((page) => {
         pagesDisplay.push({
             id: page.id,
@@ -776,12 +732,8 @@ function record2WayLoadPages(viz, pass, inputBuffer1, inputBuffer2, bufferCount,
             status: 'EMPTY',
             runId: page.runId
         });
-    });
-
-    // Build buffers visualization (always 3 buffers for 2-way merge)
-    const buffersDisplay = [];
-
-    // Input Buffer 1
+    });    
+    const buffersDisplay = [];    
     buffersDisplay.push({
         id: 'F1',
         name: 'Input Buffer 1',
@@ -789,7 +741,6 @@ function record2WayLoadPages(viz, pass, inputBuffer1, inputBuffer2, bufferCount,
         status: inputBuffer1?.length > 0 ? 'ACTIVE' : 'EMPTY'
     });
 
-    // Input Buffer 2
     buffersDisplay.push({
         id: 'F2',
         name: 'Input Buffer 2',
@@ -797,7 +748,6 @@ function record2WayLoadPages(viz, pass, inputBuffer1, inputBuffer2, bufferCount,
         status: inputBuffer2?.length > 0 ? 'ACTIVE' : 'EMPTY'
     });
 
-    // Output Buffer
     buffersDisplay.push({
         id: 'F3',
         name: 'Output Buffer',
@@ -832,10 +782,8 @@ function record2WayCreateMergedRun(viz, pass, run1Pages, run2Pages, pagesForDisp
 
     const mergedPageIds = mergedVisualPages.map(p => p.id);
 
-    // Build buffers visualization (showing them still active with data from B1)
     const buffersDisplay = [];
 
-    // Input Buffer 1
     buffersDisplay.push({
         id: 'F1',
         name: 'Input Buffer 1',
@@ -843,7 +791,6 @@ function record2WayCreateMergedRun(viz, pass, run1Pages, run2Pages, pagesForDisp
         status: run1Pages.length > 0 ? 'ACTIVE' : 'EMPTY'
     });
 
-    // Input Buffer 2
     buffersDisplay.push({
         id: 'F2',
         name: 'Input Buffer 2',
@@ -851,7 +798,6 @@ function record2WayCreateMergedRun(viz, pass, run1Pages, run2Pages, pagesForDisp
         status: run2Pages.length > 0 ? 'ACTIVE' : 'EMPTY'
     });
 
-    // Output Buffer (empty, ready to receive merged data)
     buffersDisplay.push({
         id: 'F3',
         name: 'Output Buffer',
@@ -1050,4 +996,3 @@ function record2WayWritePage(viz, pass, targetPageId, outputPageData, inputBuffe
         metrics: { reads: 0, writes: 1, comparisons: 0 }
     });
 }
-
